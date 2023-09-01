@@ -4,6 +4,7 @@ import './App.css';
 import JoinForm from './JoinForm';
 import NextPromptForm from './NextPromptForm';
 import { Button, LinearProgress } from '@mui/material';
+import PlayersListDisplay from './PlayersListDisplay';
 
 const url = 'http://localhost:8000';
 function App() {
@@ -11,18 +12,13 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [playerInGame, setPlayerInGame] = useState(false);
   const [awaitingJoin, setAwaitingJoin] = useState(false);
+  const [gamePlayers, setGamePlayers] = useState([]);
 
+  let infoPollTimer: NodeJS.Timer | null = null;
   // fetch data from server
   useEffect(() => {
-    fetch('localhost:8000/status')
-       .then((response) => response.json())
-       .then((data) => {
-          console.log(data);
-          setGameStatus(data);
-       })
-       .catch((err) => {
-          console.log(err.message);
-       });
+    updateInfo();
+    infoPollTimer = setInterval(()=> updateInfo(), 10000);
   }, []);
 
   // functions to pass in to other forms
@@ -65,11 +61,30 @@ function App() {
     })
   }
 
+  // polling for game updates
+  const updateInfo = () => {
+    fetch(`${url}/info`).then((response) => response.json())
+    .then((data) => {
+       //console.log(data);
+       setGameStatus(data.status);
+       setGamePlayers(data.players);
+
+       if (data.status === 'RUNNING' && infoPollTimer != null) {
+        clearInterval(infoPollTimer);
+        infoPollTimer = null;
+       }
+    })
+    .catch((err) => {
+       console.log(err.message);
+    });
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <h1> Genestrations </h1>
         <h2> Game is {gameStatus} </h2>
+        <PlayersListDisplay players={gamePlayers} />
         {playerName === '' && !awaitingJoin &&
             <JoinForm join={join} />
         }
