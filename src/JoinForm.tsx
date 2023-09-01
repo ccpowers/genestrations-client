@@ -21,6 +21,10 @@ const JoinForm: React.FC<JoinFormProps> = ({join}) => {
             <TextField label='Name' 
                 value={name}
                 onInput={onNameInput}
+                sx={{
+                    width: 300,
+                    color: 'white',
+                  }}
             />
             <TextField label='Initial Prompt'
                 value={prompt}

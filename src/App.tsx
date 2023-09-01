@@ -5,6 +5,14 @@ import JoinForm from './JoinForm';
 import NextPromptForm from './NextPromptForm';
 import { Button, LinearProgress } from '@mui/material';
 import PlayersListDisplay from './PlayersListDisplay';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 const url = 'http://localhost:8000';
 function App() {
@@ -13,12 +21,16 @@ function App() {
   const [playerInGame, setPlayerInGame] = useState(false);
   const [awaitingJoin, setAwaitingJoin] = useState(false);
   const [gamePlayers, setGamePlayers] = useState([]);
+  const [imageUrl, setImageUrl] = useState('');
 
+  // infoPollTimer should be running only before the start of the game
   let infoPollTimer: NodeJS.Timer | null = null;
   // fetch data from server
   useEffect(() => {
-    updateInfo();
-    infoPollTimer = setInterval(()=> updateInfo(), 10000);
+    // updateInfo();
+    if (infoPollTimer === null) {
+        infoPollTimer = setInterval(()=> updateInfo(), 500);
+    }
   }, []);
 
   // functions to pass in to other forms
@@ -61,6 +73,22 @@ function App() {
     })
   }
 
+  // polling for image updates
+  const getNextImage = () => {
+    fetch(`${url}/image`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({player: playerName})
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        if( data.success && data.url ) {
+            setImageUrl(data.url);
+        }
+      })
+  }
   // polling for game updates
   const updateInfo = () => {
     fetch(`${url}/info`).then((response) => response.json())
@@ -81,26 +109,34 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
+    <ThemeProvider theme={darkTheme}>
         <h1> Genestrations </h1>
-        <h2> Game is {gameStatus} </h2>
-        <PlayersListDisplay players={gamePlayers} />
-        {playerName === '' && !awaitingJoin &&
-            <JoinForm join={join} />
+        <div className="sections">
+        <div className="section-container">
+            <p> Game is {gameStatus} </p>
+            {playerInGame && gameStatus === 'PENDING' &&
+                <Button onClick={startGame}>Start</Button>
+            }
+        </div>
+        <div className="section-container">
+            <PlayersListDisplay players={gamePlayers} />
+        </div>
+        <div className="section-container">
+        {playerName === '' && !awaitingJoin && gameStatus === 'PENDING' && 
+                <JoinForm join={join} />
+        }
+        {playerName === '' && !awaitingJoin && gameStatus !== 'PENDING' && 
+                <p>You can't join a running game.</p>
         }
         {awaitingJoin &&
             <LinearProgress />
         }
-        {playerInGame && gameStatus === 'PENDING' &&
-            <Button onClick={startGame}>Start</Button>
-        }
         {playerInGame && gameStatus === 'RUNNING' &&
-            <NextPromptForm submit={submit} imageUrl={'http://localhost:8000/image3.jpeg'}/>
+            <NextPromptForm submit={submit} imageUrl={imageUrl}/>
         }
-        {playerInGame && gameStatus === 'FINISHED' &&
-            <h3>Game over</h3>
-        }
-      </header>
+        </div>
+        </div>
+      </ThemeProvider>
     </div>
   );
 }

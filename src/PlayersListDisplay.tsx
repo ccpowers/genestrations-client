@@ -10,12 +10,16 @@ const PlayersListDisplay: React.FC<PlayersListProps> = ({ players }) => {
 
     return (
         <div>
+            <h2>Players online</h2>
             {players.map((player, index) => (
-                <Chip
+                <p key={index} className="player-name">
+                {/* <Chip
                     key={index}
                     label={player}
                     style={{ backgroundColor: colors[index % colors.length], margin: '5px' }}
-                />
+                /> */}
+                {player}
+                </p>
             ))}
         </div>
     );
