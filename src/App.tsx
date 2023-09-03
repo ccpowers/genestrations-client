@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import JoinForm from './JoinForm';
 import NextPromptForm from './NextPromptForm';
@@ -7,6 +6,7 @@ import { Button, LinearProgress } from '@mui/material';
 import PlayersListDisplay from './PlayersListDisplay';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import PlayerSection from './PlayerSection';
 
 const darkTheme = createTheme({
   palette: {
@@ -16,7 +16,7 @@ const darkTheme = createTheme({
 
 const url = 'http://localhost:8000';
 function App() {
-  const [gameStatus, setGameStatus] = useState('PENDING');
+  const [gameStatus, setGameStatus] = useState<'PENDING' | 'RUNNING'>('PENDING');
   const [playerName, setPlayerName] = useState('');
   const [playerInGame, setPlayerInGame] = useState(false);
   const [awaitingJoin, setAwaitingJoin] = useState(false);
@@ -61,6 +61,13 @@ function App() {
     });
   }
 
+  // fake "connection" to server by just setting user name to whatever is input.
+  // if user wants to cheat, go for it
+  // TODO verify name is valid player
+  const connect = (name: string) => {
+    setPlayerName(name);
+  }
+
   const submit = (prompt: string) => {
     console.log(`Player ${playerName} submitted ${prompt}`)
   }
@@ -74,7 +81,8 @@ function App() {
   }
 
   // polling for image updates
-  const getNextImage = () => {
+  const getNextImage = (playerName: string) => {
+    console.log(`Getting next image for player ${playerName}`);
     fetch(`${url}/image`, {
         method: 'POST',
         headers: {
@@ -86,9 +94,12 @@ function App() {
       .then((data) => {
         if( data.success && data.url ) {
             setImageUrl(data.url);
+        } else {
+          console.log(`Got image response ${JSON.stringify(data)}`);
         }
       })
   }
+
   // polling for game updates
   const updateInfo = () => {
     fetch(`${url}/info`).then((response) => response.json())
@@ -97,6 +108,7 @@ function App() {
        setGameStatus(data.status);
        setGamePlayers(data.players);
 
+       // stop polling when game is runnning
        if (data.status === 'RUNNING' && infoPollTimer != null) {
         clearInterval(infoPollTimer);
         infoPollTimer = null;
@@ -122,18 +134,7 @@ function App() {
             <PlayersListDisplay players={gamePlayers} />
         </div>
         <div className="section-container">
-        {playerName === '' && !awaitingJoin && gameStatus === 'PENDING' && 
-                <JoinForm join={join} />
-        }
-        {playerName === '' && !awaitingJoin && gameStatus !== 'PENDING' && 
-                <p>You can't join a running game.</p>
-        }
-        {awaitingJoin &&
-            <LinearProgress />
-        }
-        {playerInGame && gameStatus === 'RUNNING' &&
-            <NextPromptForm submit={submit} imageUrl={imageUrl}/>
-        }
+            <PlayerSection gameStatus={gameStatus} name={playerName} join={join} submit={submit} connect={connect}/>
         </div>
         </div>
       </ThemeProvider>
