@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import JoinForm from './JoinForm';
-import NextPromptForm from './NextPromptForm';
+import JoinForm from './components/JoinForm';
+import NextPromptForm from './components/NextPromptForm';
 import { Button, LinearProgress } from '@mui/material';
-import PlayersListDisplay from './PlayersListDisplay';
+import PlayersListDisplay from './components/PlayersListDisplay';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import PlayerSection from './PlayerSection';
-import GenestrationsHeaderSection from './GenestrationsHeaderSection';
+import PlayerSection from './components/PlayerSection';
+import GenestrationsHeaderSection from './components/GenestrationsHeaderSection';
 
 const darkTheme = createTheme({
   palette: {
@@ -95,7 +95,6 @@ function App() {
 
   return (
     <div className="App">
-    <ThemeProvider theme={darkTheme}>
         <GenestrationsHeaderSection gameStatus={gameStatus} start={startGame} reset={startGame} />
         <div className="sections">
         <div className="section-container">
@@ -110,7 +109,6 @@ function App() {
             }
         </div>
         </div>
-      </ThemeProvider>
     </div>
   );
 }
