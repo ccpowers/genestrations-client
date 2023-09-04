@@ -7,6 +7,7 @@ import PlayersListDisplay from './PlayersListDisplay';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import PlayerSection from './PlayerSection';
+import GenestrationsHeaderSection from './GenestrationsHeaderSection';
 
 const darkTheme = createTheme({
   palette: {
@@ -14,14 +15,11 @@ const darkTheme = createTheme({
   },
 });
 
-const url = 'http://localhost:8000';
+const url = 'https://018b-72-80-40-33.ngrok-free.app';
 function App() {
-  const [gameStatus, setGameStatus] = useState<'PENDING' | 'RUNNING'>('PENDING');
-  const [playerName, setPlayerName] = useState('');
-  const [playerInGame, setPlayerInGame] = useState(false);
-  const [awaitingJoin, setAwaitingJoin] = useState(false);
+  const [gameStatus, setGameStatus] = useState<'PENDING' | 'RUNNING' | 'UNKNOWN'>('UNKNOWN');
   const [gamePlayers, setGamePlayers] = useState([]);
-  const [imageUrl, setImageUrl] = useState('');
+  const [playerName, setPlayerName] = useState('');
 
   // infoPollTimer should be running only before the start of the game
   let infoPollTimer: NodeJS.Timer | null = null;
@@ -35,7 +33,6 @@ function App() {
 
   // functions to pass in to other forms
   const join = (name: string, prompt: string) => {
-    setAwaitingJoin(true);
     console.log(`Player ${name} joined with initial prompt ${prompt}`);
   fetch(`${url}/register`, {
     method: 'POST',
@@ -50,8 +47,6 @@ function App() {
        // TODO validate type of data
        if (data.success === true) {
         setPlayerName(name);
-        setPlayerInGame(true);
-        setAwaitingJoin(false);
        } else {
         console.log(`Failed to register player: ${data.msg}`)
        }
@@ -68,9 +63,7 @@ function App() {
     setPlayerName(name);
   }
 
-  const submit = (prompt: string) => {
-    console.log(`Player ${playerName} submitted ${prompt}`)
-  }
+
 
   const startGame = () => {
     fetch(`${url}/start`).then((resp) => {
@@ -80,25 +73,6 @@ function App() {
     })
   }
 
-  // polling for image updates
-  const getNextImage = (playerName: string) => {
-    console.log(`Getting next image for player ${playerName}`);
-    fetch(`${url}/image`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({player: playerName})
-      })
-      .then((response) => response.json())
-      .then((data) => {
-        if( data.success && data.url ) {
-            setImageUrl(data.url);
-        } else {
-          console.log(`Got image response ${JSON.stringify(data)}`);
-        }
-      })
-  }
 
   // polling for game updates
   const updateInfo = () => {
@@ -122,19 +96,18 @@ function App() {
   return (
     <div className="App">
     <ThemeProvider theme={darkTheme}>
-        <h1> Genestrations </h1>
+        <GenestrationsHeaderSection gameStatus={gameStatus} start={startGame} reset={startGame} />
         <div className="sections">
-        <div className="section-container">
-            <p> Game is {gameStatus} </p>
-            {playerInGame && gameStatus === 'PENDING' &&
-                <Button onClick={startGame}>Start</Button>
-            }
-        </div>
         <div className="section-container">
             <PlayersListDisplay players={gamePlayers} />
         </div>
         <div className="section-container">
-            <PlayerSection gameStatus={gameStatus} name={playerName} join={join} submit={submit} connect={connect}/>
+            {gameStatus === 'UNKNOWN' && 
+              <div>Connecting to server...</div>
+            }
+            {gameStatus !== 'UNKNOWN' && 
+              <PlayerSection gameStatus={gameStatus} name={playerName} join={join} connect={connect}/>
+            }
         </div>
         </div>
       </ThemeProvider>

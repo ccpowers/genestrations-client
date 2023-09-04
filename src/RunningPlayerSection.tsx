@@ -3,24 +3,18 @@ import NextPromptForm from './NextPromptForm';
 import ConnectForm from './ConnectForm';
 
 interface RunningPlayerSectionProps  {
-    submit: (player: string, prompt: string) => void,
     connect: (player: string) => void,
     name: string
 };
 
-const RunningPlayerSection: React.FC<RunningPlayerSectionProps> = ({submit, connect, name}) => {
-    // combine player name and prompt guess in this component
-    const submitPrompt = (prompt: string) => {
-        submit(name, prompt);
-    }
-
+const RunningPlayerSection: React.FC<RunningPlayerSectionProps> = ({connect, name}) => {
     return (
         <div>
             {name === '' &&
                 <ConnectForm connect={connect}/>
             }
             {name !== '' && 
-                <NextPromptForm submit={submitPrompt} imageUrl={''}/>
+                <NextPromptForm name={name}/>
             }
         </div>
     );
